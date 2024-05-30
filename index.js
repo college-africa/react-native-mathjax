@@ -25,6 +25,12 @@ const defaultOptions = {
       "noUndefined.js",
     ],
   },
+  asciimath2jax: {
+    delimiters: [
+      ["`", "`"],
+      ["$", "$"],
+    ],
+  },
 };
 
 class MathJax extends React.Component {
@@ -49,9 +55,6 @@ class MathJax extends React.Component {
     return `
 			<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 			<script type="text/x-mathjax-config">
-			MathJax = {
-						loader: {load: ['input/asciimath', 'output/chtml', 'ui/menu']},
-					};
 				MathJax.Hub.Config(${options});
 
 				MathJax.Hub.Queue(function() {
@@ -61,8 +64,8 @@ class MathJax extends React.Component {
 				});
 			</script>
 
-			<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
-			<div id="formula" style="visibility: hidden;">
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=AM_SVG"></script>
+			<div id="formula" style="visibility: hidden; ${this.props.cssStyles}">
 				${content}
 			</div>
 		`;
