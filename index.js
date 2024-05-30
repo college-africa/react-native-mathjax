@@ -1,92 +1,65 @@
-import React from "react";
-import { View } from "react-native";
-import { WebView } from "react-native-webview";
+import React, { useCallback, useState } from 'react';
+import { WebView } from 'react-native-webview';
 
 const defaultOptions = {
-  messageStyle: "none",
-  extensions: ["tex2jax.js"],
-  jax: ["input/TeX", "output/HTML-CSS"],
-  tex2jax: {
-    inlineMath: [
-      ["$", "$"],
-      ["\\(", "\\)"],
-    ],
-    displayMath: [
-      ["$$", "$$"],
-      ["\\[", "\\]"],
-    ],
-    processEscapes: true,
-  },
-  TeX: {
-    extensions: [
-      "AMSmath.js",
-      "AMSsymbols.js",
-      "noErrors.js",
-      "noUndefined.js",
-    ],
-  },
-  asciimath2jax: {
-    delimiters: [
-      ["`", "`"],
-      ["$", "$"],
-    ],
-  },
+	messageStyle: 'none',
+	extensions: ['tex2jax.js'],
+	jax: ['input/TeX', 'output/HTML-CSS'],
+	tex2jax: {
+		inlineMath: [['$', '$'], ['\\(', '\\)']],
+		displayMath: [['$$', '$$'], ['\\[', '\\]']],
+		processEscapes: true,
+	},
+	TeX: {
+		extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js']
+	},
+	asciimath2jax: {
+		delimiters: [['`','`'], ['$','$']]
+	}
 };
 
-class MathJax extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      height: 1,
+const MathJax = (props) => {
+    const [height, setHeight] = useState(1);
+
+    const handleMessage = useCallback((message) => {
+        console.info(message);
+        setHeight(Number(message.nativeEvent.data));
+    }, []);
+
+    const wrapMathjax = (content) => {
+        const options = JSON.stringify(
+            Object.assign({}, defaultOptions, props.mathJaxOptions)
+        );
+
+        return `
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+            <script type="text/x-mathjax-config">
+                MathJax.Hub.Config(${options});
+
+                MathJax.Hub.Queue(function() {
+                    var height = document.documentElement.scrollHeight;
+                    window.ReactNativeWebView.postMessage(String(height));
+                    document.getElementById("formula").style.visibility = '';
+                });
+            </script>
+
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=AM_SVG"></script>
+            <div id="formula" style="visibility: 'hidden'; ${props.cssStyles}">
+                ${content}
+            </div>
+        `;
     };
-  }
 
-  handleMessage(message) {
-    this.setState({
-      height: Number(message.nativeEvent.data),
-    });
-  }
-
-  wrapMathjax(content) {
-    const options = JSON.stringify(
-      Object.assign({}, defaultOptions, this.props.mathJaxOptions)
-    );
-
-    return `
-			<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-			<script type="text/x-mathjax-config">
-				MathJax.Hub.Config(${options});
-
-				MathJax.Hub.Queue(function() {
-					var height = document.documentElement.scrollHeight;
-					window.ReactNativeWebView.postMessage(String(height));
-					document.getElementById("formula").style.visibility = '';
-				});
-			</script>
-
-			<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=AM_SVG"></script>
-			<div id="formula" style="visibility: hidden; ${this.props.cssStyles}">
-				${content}
-			</div>
-		`;
-  }
-  render() {
-    const html = this.wrapMathjax(this.props.html);
-
-    // Create new props without `props.html` field. Since it's deprecated.
-    const props = Object.assign({}, this.props, { html: undefined });
+    const html = wrapMathjax(props.html);
 
     return (
-      <View style={{ height: this.state.height, ...props.style }}>
         <WebView
-          scrollEnabled={false}
-          onMessage={this.handleMessage.bind(this)}
-          source={{ html }}
-          {...props}
+            scrollEnabled={false}
+            onMessage={handleMessage}
+            source={{ html }}
+            style={{ height, ...props.style}}
         />
-      </View>
     );
-  }
-}
+};
 
 export default MathJax;
