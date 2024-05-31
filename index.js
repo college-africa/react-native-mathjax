@@ -22,7 +22,6 @@ const MathJax = (props) => {
     const [height, setHeight] = useState(1);
 
     const handleMessage = useCallback((message) => {
-        console.info(message);
         setHeight(Number(message.nativeEvent.data));
     }, []);
 
